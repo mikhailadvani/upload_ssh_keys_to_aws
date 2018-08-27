@@ -114,6 +114,7 @@ def get_all_public_key_files(folder):
 def main():
     logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=LOG_LEVEL_MAPPINGS[args.log_level])
     logging.getLogger('botocore').setLevel(logging.CRITICAL)
+    logging.getLogger('urllib3').setLevel(logging.CRITICAL)
     all_public_key_files = get_all_public_key_files(args.directory)
     for public_key_file in all_public_key_files:
         key_pair = LocalKeyPair(public_key_file).upsert()
