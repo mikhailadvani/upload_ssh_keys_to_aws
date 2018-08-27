@@ -17,7 +17,7 @@ $ docker run \
   -e "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" \
   -e "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" \
   -e "AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION" \
-  sync_ssh_keys_to_aws -d /keys -l DEBUG
+  mikhailadvani/upload_ssh_keys_to_aws -d /keys -l DEBUG
 ```
 
 With API Keys in credentials file
@@ -27,7 +27,7 @@ $ docker run \
   -v <ABSOLUTE_PATH_TO_KEYS_FOLDER>:/keys \
   -v <ABSOLUTE_PATH_TO_HOME>/.aws/credentials:/root/.aws/credentials \
   -e "AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION" \
-  sync_ssh_keys_to_aws -d /keys -l DEBUG
+  mikhailadvani/upload_ssh_keys_to_aws -d /keys -l DEBUG
 ```
 
 ## Native Version
