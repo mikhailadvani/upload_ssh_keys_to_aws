@@ -72,9 +72,6 @@ class LocalKeyPair():
         else:
             logging.info('Key pair already exists on AWS with name {} and fingerprint {}'.format(self.name, self.remote.fingerprint))
 
-    def _delete(self):
-        raise NotImplementedError
-
     def _calculate_fingerprint(self):
         ssh_keygen_output_file = "/tmp/ssh_keygen_output"
         openssl_pkey_output_file = "/tmp/openssl_pkey_output"
@@ -111,13 +108,30 @@ def get_all_public_key_files(folder):
         logging.info(file)
     return files
 
+def get_all_remote_public_keys():
+    key_pair_names = []
+    ec2_client = boto3.client('ec2')
+    key_pairs = ec2_client.describe_key_pairs()['KeyPairs']
+    for key_pair in key_pairs:
+        key_pair_names.append(key_pair['KeyName'])
+    return key_pair_names
+
 def main():
     logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=LOG_LEVEL_MAPPINGS[args.log_level])
     logging.getLogger('botocore').setLevel(logging.CRITICAL)
     logging.getLogger('urllib3').setLevel(logging.CRITICAL)
     all_public_key_files = get_all_public_key_files(args.directory)
+    local_key_names = []
     for public_key_file in all_public_key_files:
-        key_pair = LocalKeyPair(public_key_file).upsert()
+        key_pair = LocalKeyPair(public_key_file)
+        key_pair.upsert()
+        local_key_names.append(key_pair.name)
+    if args.delete_keys:
+        logging.debug('Going to delete keys from AWS which are not present in the folder')
+        for remote_public_key in get_all_remote_public_keys():
+            if remote_public_key not in local_key_names:
+                logging.info('{} not found in {}'.format(remote_public_key, local_key_names))
+                RemoteKeyPair(remote_public_key).delete_key_pair()
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -138,6 +152,11 @@ parser.add_argument(
     default="/tmp",
     action="store",
     help="Temporary directory to write files to"
+)
+parser.add_argument(
+    "--delete-keys",
+    action="store_true",
+    help="Whether to delete keys not present in the folder. Use very carefully"
 )
 args = parser.parse_args()
 
