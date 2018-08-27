@@ -20,6 +20,13 @@ class RemoteKeyPair():
     def __init__(self, name):
         self.name = name
         self.exists, self.fingerprint = self._get_remote_fingerprint()
+        self.is_imported = self._check_if_imported()
+
+    def _check_if_imported(self):
+        if self.exists:
+            return len(self.fingerprint.replace(':','')) == 32
+        else:
+            return True
 
     def _get_remote_fingerprint(self):
         ec2_client = boto3.client('ec2')
@@ -47,13 +54,16 @@ class RemoteKeyPair():
 
     def delete_key_pair(self):
         ec2_client = boto3.client('ec2')
-        try:
-            ec2_client.delete_key_pair(
-                KeyName=self.name
-            )
-            logging.info('Deleted public key with name {}'.format(self.name))
-        except ClientError as e:
-            logging.critical('Failed to delete key {} with error "{}"'.format(self.name, e.response['Error']['Message']))
+        if self.is_imported:
+            try:
+                ec2_client.delete_key_pair(
+                    KeyName=self.name
+                )
+                logging.info('Deleted public key with name {}'.format(self.name))
+            except ClientError as e:
+                logging.critical('Failed to delete key {} with error "{}"'.format(self.name, e.response['Error']['Message']))
+        else:
+            logging.info('Skipping the deletion of {} since it was not imported but AWS created'.format(self.name))
 
 
 class LocalKeyPair():
